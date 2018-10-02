@@ -23,15 +23,35 @@ def makeMatrix(I, J, fill=0.0):
 
 # our sigmoid function, tanh is a little nicer than the standard 1/(1+e^-x)
 def sigmoid(x):
-    # return math.tanh(x)
-    return 1 / (1 + numpy.exp(-x))
-
+    #return math.tanh(x)
+    return 1.0 / (1.0 + numpy.e ** -x)
 
 # derivative of our sigmoid function, in terms of the output (i.e. y)
 def dsigmoid(y):
-    # return 1.0 - y**2
-    return y * (1 - y)
+    #return 1.0 - y**2
+    return y * (1.0 - y)
 
+
+# our activation function used in output layer is ReLu
+def relu(x):
+    return numpy.maximum(x, 0)
+
+# derivative of our sigmoid function, in terms of the output (i.e. y)
+def drelu(y):
+    return (y > 0) * 1
+
+# our activation function used in output layer is ReLu
+def leakrelu(x):
+    if x > 0:
+        return x
+    else:
+        return 0.01 * x
+
+def dleakrelu(x):
+    if x > 0:
+        return 1.0
+    else:
+        return 0.01
 
 # read csv for training and testing
 def readCsv(fileName):
@@ -93,14 +113,15 @@ class NN:
             for i in range(self.ni):
                 sum = sum + self.ai[i] * self.wi[i][j]
             self.ah[j] = sigmoid(sum)
+            #self.ah[j] = leakrelu(sum)
 
         # output activations
         for k in range(self.no):
             sum = 0.0
             for j in range(self.nh):
                 sum = sum + self.ah[j] * self.wo[j][k]
-            #3self.ao[k] = sigmoid(sum)
-            self.ao[k] = sum
+            #self.ao[k] = sigmoid(sum)
+            self.ao[k] = relu(sum)
 
         return self.ao[:]
 
@@ -112,9 +133,8 @@ class NN:
         output_deltas = [0.0] * self.no
         for k in range(self.no):
             error = targets[k] - self.ao[k]
-            output_deltas[k] = 1 * error
+            output_deltas[k] = drelu(self.ao[k]) * error
             # output_deltas[k] = dsigmoid(self.ao[k]) * error
-            # output_deltas[k] = dsigmoid(self.ao[k]) * -error
 
         # calculate error terms for hidden
         hidden_deltas = [0.0] * self.nh
@@ -123,6 +143,7 @@ class NN:
             for k in range(self.no):
                 error = error + output_deltas[k] * self.wo[j][k]
             hidden_deltas[j] = dsigmoid(self.ah[j]) * error
+            #hidden_deltas[j] = dleakrelu(self.ah[j]) * error
 
         # update output weights
         for j in range(self.nh):
