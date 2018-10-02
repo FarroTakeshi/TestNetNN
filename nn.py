@@ -104,8 +104,8 @@ class NN:
 
         # input activations
         for i in range(self.ni - 1):
-            # self.ai[i] = sigmoid(inputs[i])
-            self.ai[i] = inputs[i]
+            self.ai[i] = sigmoid(inputs[i])
+            #self.ai[i] = inputs[i]
 
         # hidden activations
         for j in range(self.nh):
@@ -168,7 +168,9 @@ class NN:
 
     def test(self, patterns):
         for p in patterns:
-            print(p[0], '->', self.update(p[0]))
+            result = int(round(numpy.array(self.update(p[0])) * 1000.0))
+            real_effort = int(numpy.array(p[1]) * 1000.0)
+            print(p[0], '->', result, 'Real Effort: ', real_effort, 'Error: ', abs((real_effort - result) * 100.0))
 
     def weights(self):
         print('Input weights:')
@@ -195,19 +197,12 @@ class NN:
 
 def demo():
     # Teach network XOR function
-    pat = readCsv('UCP_Dataset_test')
+    pat = readCsv('UCP_Dataset_test2_1')
     # pat = readCsv('UCP_Dataset_test2')
-    #    pat = [
-    #        [[0,0], [0]],
-    #        [[0,1], [1]],
-    #        [[1,0], [1]],
-    #        [[1,1], [0]]
-    #    ]
 
     # create a network with two input, two hidden, and one output nodes
-    # n = NN(4, 2, 1)
     n = NN(8, 3, 1)
-    # n = NN(2, 2, 1)
+
     # train it with some patterns
     n.train(pat)
     # test it
