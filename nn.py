@@ -1,9 +1,10 @@
 # Back-Propagation Neural Networks
 
-import math
 import random
 import pandas as pd
 import numpy
+import mysql.connector
+import datetime
 
 random.seed(0)
 
@@ -40,18 +41,6 @@ def relu(x):
 def drelu(y):
     return (y > 0) * 1
 
-# our activation function used in output layer is ReLu
-def leakrelu(x):
-    if x > 0:
-        return x
-    else:
-        return 0.01 * x
-
-def dleakrelu(x):
-    if x > 0:
-        return 1.0
-    else:
-        return 0.01
 
 # read csv for training and testing
 def readCsv(fileName):
@@ -69,6 +58,72 @@ def readCsv(fileName):
         arr.append([x_values[x], [y_values[x]]])
 
     return arr
+
+
+def insert_database(query, args):
+    # query = "INSERT INTO rna_trainings(train_date, user_id, is_active) " \
+    #         "VALUES(%s, %s, %s)"
+    # args = (datetime.datetime.now(), 1, True)
+
+    try:
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user="youruser",
+            passwd="yourpassword",
+            db='yourdatabase',
+            charset='utf8mb4')
+
+        cursor = mydb.cursor()
+        cursor.execute(query, args)
+
+        if cursor.lastrowid:
+            print('last insert id', cursor.lastrowid)
+        else:
+            print('last insert id not found')
+
+        mydb.commit()
+    except mysql.connector.Error as error:
+        print(error)
+
+def get_training():
+    ans = None
+    try:
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user="youruser",
+            passwd="yourpassword",
+            db='yourdatabase',
+            charset='utf8mb4')
+
+        cursor = mydb.cursor()
+        cursor.execute("SELECT * FROM rna_trainings WHERE is_active = 1")
+        ans = cursor.fetchall()
+
+        return ans
+
+    except mysql.connector.Error as error:
+        print(error)
+
+    return ans
+
+def insert_training():
+    training = get_training()
+    if training is not None:
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user="youruser",
+            passwd="yourpassword",
+            db='yourdatabase',
+            charset='utf8mb4')
+
+        cursor = mydb.cursor()
+        cursor.execute("UPDATE rna_trainings SET is_active = %s WHERE id = %s", (False, training[0][0]))
+        mydb.commit()
+
+    query = "INSERT INTO rna_trainings(train_date, user_id, is_active) " \
+            "VALUES(%s, %s, %s)"
+    args = (datetime.datetime.now(), 1, True)
+    insert_database(query, args)
 
 
 class NN:
@@ -211,3 +266,5 @@ def demo():
 
 if __name__ == '__main__':
     demo()
+
+    insert_training()
