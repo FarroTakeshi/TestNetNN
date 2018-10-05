@@ -73,6 +73,7 @@ def insert_database(query, args):
             db='yourdatabase',
             charset='utf8mb4')
 
+        mydb.set_converter_class(NumpyMySQLConverter)
         cursor = mydb.cursor()
         cursor.execute(query, args)
 
@@ -84,6 +85,8 @@ def insert_database(query, args):
         mydb.commit()
     except mysql.connector.Error as error:
         print(error)
+
+    return cursor.lastrowid
 
 def get_training():
     ans = None
@@ -106,7 +109,7 @@ def get_training():
 
     return ans
 
-def insert_training():
+def insert_training(hidden_weights, output_weights, ni, nh, no):
     training = get_training()
     if training is not None:
         mydb = mysql.connector.connect(
@@ -123,7 +126,35 @@ def insert_training():
     query = "INSERT INTO rna_trainings(train_date, user_id, is_active) " \
             "VALUES(%s, %s, %s)"
     args = (datetime.datetime.now(), 1, True)
-    insert_database(query, args)
+    train_id = insert_database(query, args)
+
+    for i in range(ni):
+        query = "INSERT INTO hidden_weights(neuron1, neuron2, neuron3, train_id) " \
+                "VALUES(%s, %s, %s, %s)"
+        args = (hidden_weights[i][nh - 3], hidden_weights[i][nh - 2], hidden_weights[i][nh - 1], train_id)
+        hidden_weight_id = insert_database(query, args)
+
+    for j in range(nh):
+        query = "INSERT INTO output_weights(neuron1, train_id) " \
+                "VALUES(%s, %s)"
+        args = (output_weights[j][no - 1], train_id)
+        output_weight_id = insert_database(query, args)
+
+
+class NumpyMySQLConverter(mysql.connector.conversion.MySQLConverter):
+    """ A mysql.connector Converter that handles Numpy types """
+
+    def _float32_to_mysql(self, value):
+        return float(value)
+
+    def _float64_to_mysql(self, value):
+        return float(value)
+
+    def _int32_to_mysql(self, value):
+        return int(value)
+
+    def _int64_to_mysql(self, value):
+        return int(value)
 
 
 class NN:
@@ -249,6 +280,8 @@ class NN:
             if i % 100 == 0:
                 print('error %-.5f' % error)
 
+        insert_training(self.wi, self.wo, self.ni, self.nh, self.no)
+
 
 def demo():
     # Teach network XOR function
@@ -266,5 +299,3 @@ def demo():
 
 if __name__ == '__main__':
     demo()
-
-    insert_training()
