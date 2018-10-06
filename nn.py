@@ -49,7 +49,6 @@ def readCsv(fileName):
     X = df.iloc[:, 1:-1]
     x_values = X.values
 
-    # y = df.iloc[:, 5]
     y = df.iloc[:, 9]
     y_values = y.values
 
@@ -61,10 +60,6 @@ def readCsv(fileName):
 
 
 def insert_database(query, args):
-    # query = "INSERT INTO rna_trainings(train_date, user_id, is_active) " \
-    #         "VALUES(%s, %s, %s)"
-    # args = (datetime.datetime.now(), 1, True)
-
     try:
         mydb = mysql.connector.connect(
             host="localhost",
@@ -180,7 +175,7 @@ class NN:
             for k in range(self.no):
                 self.wo[j][k] = rand(-2.0, 2.0)
 
-                # last change in weights for momentum
+        # last change in weights for momentum
         self.ci = makeMatrix(self.ni, self.nh)
         self.co = makeMatrix(self.nh, self.no)
 
@@ -220,7 +215,6 @@ class NN:
         for k in range(self.no):
             error = targets[k] - self.ao[k]
             output_deltas[k] = drelu(self.ao[k]) * error
-            # output_deltas[k] = dsigmoid(self.ao[k]) * error
 
         # calculate error terms for hidden
         hidden_deltas = [0.0] * self.nh
@@ -229,7 +223,6 @@ class NN:
             for k in range(self.no):
                 error = error + output_deltas[k] * self.wo[j][k]
             hidden_deltas[j] = dsigmoid(self.ah[j]) * error
-            #hidden_deltas[j] = dleakrelu(self.ah[j]) * error
 
         # update output weights
         for j in range(self.nh):
@@ -237,7 +230,6 @@ class NN:
                 change = output_deltas[k] * self.ah[j]
                 self.wo[j][k] = self.wo[j][k] + N * change + M * self.co[j][k]
                 self.co[j][k] = change
-                # print N*change, M*self.co[j][k]
 
         # update input weights
         for i in range(self.ni):
